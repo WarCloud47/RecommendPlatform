@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div id = "reviewform">
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div></div>
+    <br>
+    <!--<button type="submit" class="btn btn-light">Найти</button>-->
+        <div id = "putuserpredict_div" hidden = true></div>
+        <h4  id = "putuserpredict"></h4>
+        <br>
+        <div id = "falsepredict" hidden = true>
+            <div class="row">
+                <div class="col-md-4">
+                    <form method="POST" action="/sentiment">
+                        {{ form2.csrf_token }}
+                        <div class="form-group">
+                        {{ form2.rating_sent.label }}
+                        <br>
+                        {{ form2.rating_sent(size=40) }}
+                        <br><br>
+                        {{ wtf.form_field(form2.submit_false, button_map={'submit':'success'}) }}
+                        <div hidden = true><br><br>
+                        {{ form2.review_test.label }}
+                        <br >
+                        {{ form2.review_test(size=40) }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('static', filename='js/jquery-3.4.0.js')}}"></script>
+{{ super() }}
+<script>
+$(document).ready(function(){
+var analyzer = 'true';
+    $('#submit').on('click', function(event) {
+        if ($('#analyzer').is(':checked')){
+            analyzer = 'true'
+        } else{
+            analyzer = 'false'
+        }
+        $('#putuserpredict').hide();
+        $('#putuserpredict_div').html('<img src="{{ url_for('static', filename='ajax-loader.gif') }}">').show();
+        $.ajax({
+            data : { 
+                    analyzer: analyzer,
+                    review : $('#review').val(), },
+            type : 'POST',
+            url : '/get_sentiment',
+            success: 
+                function(response) {
+                    $('#putuserpredict_div').hide();
+                    $('#putuserpredict').text('Рейтинг отзыва: ' + response.rating).show();
+                    $('#submit').blur();
+                    //$('#truepredict').show();
+                    $('#falsepredict').show();
+                    $('#review_test').text(response.review);
+                    $('#rating_sent').val(response.rating);
+            },
+            error: function(error) {
+                $('#putuserpredict').text('Неверные введенные данные попробуйте снова. Попробуйте снова.').show();
+                $('#submit').blur();
+            }
+        })
+        //$('#review').val('')
+        event.preventDefault();
+    });
+});
+</script>
+{% endblock %}

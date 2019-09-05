@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div id = "reviewform">
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div></div>
+    <br>
+    <!--<button type="submit" class="btn btn-light">Найти</button>-->
+    <div id = "titlepredict" hidden = true><h3> Пользователям с похожими отзывами нравится: </h3></div> <br>
+        <div id = "putuserpredict" hidden = true></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('static', filename='js/jquery-3.4.0.js')}}"></script>
+{{ super() }}
+<script>
+$(document).ready(function(){
+    //$('#test').show()
+var counter = 1;
+var analyzer = 'true';
+    $('#submit').on('click', function(event) {
+        if ($('#analyzer').is(':checked')){
+            analyzer = 'true'
+        } else{
+            analyzer = 'false'
+        }
+        $('#putuserpredict').html('<img src="{{ url_for('static', filename='ajax-loader.gif') }}">').show();
+        $.ajax({
+            data : { title : $('#title').val(),
+                    year  : $('#year').val(),
+                    analyzer: analyzer,
+                    review : $('#review').val(),
+                    counter : counter},
+            type : 'POST',
+            url : '/user_predict',
+            success: //('#test').show().html(data.len),
+                function(response) {
+                    counter = parseInt(response.counter, 10)
+                    //alert(counter)
+                    if(counter < 6){
+                        //counter = response.counter;
+                        //alert(counter)
+                        $('#putuserpredict').text('рейтинг отзыва: ' + response.rating).show();
+                        $('#submit').blur();
+                    } else{
+                        $('#reviewform').hide();
+                        $('#titlepredict').show();
+                        $('#putuserpredict').html(response.table).show();
+                        $('#submit').blur();
+                    }
+
+                //alert(response);
+                //var json = jQuery.parseJSON(response)
+                //$('#test').show()
+                //$('#putuserpredict').html(response).show();
+                //$('#submit').blur();
+                //console.log(response);
+            },
+            error: function(error) {
+                $('#putuserpredict').text('Неверные введенные данные попробуйте снова. Попробуйте снова.').show();
+                $('#submit').blur();
+            }
+        })
+        $('#title').val('');
+        $('#year').val('')
+        $('#review').val('')
+        event.preventDefault();
+    });
+});
+</script>
+{% endblock %}

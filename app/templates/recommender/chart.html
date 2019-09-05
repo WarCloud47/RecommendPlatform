@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+    <br>
+    <!--<button type="submit" class="btn btn-light">Найти</button>-->
+        <div id = "putgenre" hidden = true></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('static', filename='js/jquery-3.4.0.js')}}"></script>
+{{ super() }}
+<script>
+$(document).ready(function(){
+    //$('#test').show()
+
+    $('#submit').on('click', function(event) {
+        $('#putgenre').html('<img src="{{ url_for('static', filename='ajax-loader.gif') }}">').show();
+        $.ajax({
+            data : { genre : $('#genre').val()} ,
+            type : 'POST',
+            url : '/get_genre',
+            success: //('#test').show().html(data.len),
+                function(response) {
+                //alert(response);
+                //var json = jQuery.parseJSON(response)
+                //$('#test').show()
+                $('#putgenre').html(response).show();
+                $('#submit').blur();
+                //console.log(response);
+            },
+            error: function(error) {
+                $('#putgenre').text('Либо такого жанра нет, либо возникла ошибка. Попробуйте снова.').show();
+                $('#submit').blur();
+            }
+        })
+        event.preventDefault();
+    });
+});
+</script>
+{% endblock %}

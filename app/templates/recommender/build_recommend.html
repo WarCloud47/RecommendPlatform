@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div id = "uploadform">
+    <div class="row">
+        <div class="col-md-4">
+            <form id="upload-file" method="post" enctype="multipart/form-data">
+                <fieldset>
+                    <label for="file">Загрузить набор данных</label>
+                    <input name="file" type="file" class="custom-file-input">
+                </fieldset>
+                <br>
+                <fieldset>
+                    <button id="upload-file-btn" type="button" class='btn btn-default'>Загрузить</button>
+                </fieldset>
+            </form>
+            <h5  id = "result" hidden = true></h5>
+        </div>
+    </div>
+</div>
+<br> 
+<div id = "parametrform">
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+</div>
+<br> 
+    <!--<button type="submit" class="btn btn-light">Найти</button>-->
+<h5  id = "putuserpredict" hidden = true></h5>
+<br>
+<div id = "downloadform" hidden = true>
+    <div class="row">
+        <div class="col-md-4">
+            <fieldset>
+                <a href="{{ url_for('recommender.download', filename=filename_one) }}"><button class='btn btn-default'>Таблица рейтингов отзывов</button></a>
+            </fieldset>
+            <br>
+            <fieldset>
+                <a href="{{ url_for('recommender.download', filename=filename_two) }}"><button class='btn btn-default'>Таблица рейтингов товаров</button></a>
+            </fieldset>
+            <br>
+            <fieldset>
+                <a href="{{ url_for('recommender.download', filename=filename_three) }}"><button class='btn btn-default'>Рекоммендательная модель</button></a>
+            </fieldset>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{url_for('static', filename='js/jquery-3.4.0.js')}}"></script>
+{{ super() }}
+<script>
+$(function() {
+    $('#upload-file-btn').click(function(event) {
+        //$('#putuserpredict').hide();
+        $('#result').html('<img src="{{ url_for('static', filename='ajax-loader.gif') }}">').show();
+        var form_data = new FormData($('#upload-file')[0]);
+        $.ajax({
+            type: 'POST',
+            url: '/get_file',
+            data: form_data,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function(response) {
+                //$('#putuserpredict_div').hide();
+                $('#reulst').html()
+                $('#result').text(response.result).show();
+                $('#upload-file-btn').blur();
+                //$('#downloadform').hide();
+            },
+            error: function(error) {
+                $('#result').text('Неверные введенные данные попробуйте снова. Попробуйте снова.').show();
+                $('#upload-file-btn').blur();
+            },
+        });
+        event.preventDefault();
+    });
+
+    var analyzer = 'true';
+    var round_rating = 'true'
+
+
+    $('#submit').on('click', function(event) {
+
+        if ($('#analyzer').is(':checked')){
+            analyzer = 'true'
+        } else{
+            analyzer = 'false'
+        }
+        if ($('#round_rating').is(':checked')){
+            round_rating = 'true'
+        } else{
+            round_rating = 'false'
+        }
+        
+        $('#putuserpredict').html('<img src="{{ url_for('static', filename='ajax-loader.gif') }}">').show();
+        $.ajax({
+            type: 'POST',
+            url: '/get_recommend',
+            data : { scale_bottom : $('#scale_bottom').val(),
+                    scale_top  : $('#scale_top ').val(),
+                    round_rating : round_rating,
+                    analyzer: analyzer},
+            //contentType: false,
+            //cache: false,
+            //processData: false,
+            success: function(response) {
+                //$('#putuserpredict_div').hide();
+                $('#putuserpredict').html()
+                $('#putuserpredict').text(response.result).show();
+                $('#upload-file-btn').blur();
+                $('#downloadform').show();
+            },
+            error: function(error) {
+                $('#putuserpredict').text('Неверные введенные данные попробуйте снова. Попробуйте снова.').show();
+                $('#submit').blur();
+            },
+        });
+        event.preventDefault();
+    });
+
+});
+</script>
+{% endblock %}
